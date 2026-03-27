@@ -1,0 +1,560 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Response Battle</title>
+    <style>
+        /* ========== Global Styles ========== */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+            color: #333;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        /* ========== Header Styles ========== */
+        .header {
+            text-align: center;
+            margin-bottom: 40px;
+            color: white;
+        }
+
+        .header h1 {
+            font-size: 3em;
+            font-weight: 700;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+        }
+
+        .credit-counter {
+            font-size: 1.2em;
+            background: rgba(255, 255, 255, 0.2);
+            padding: 12px 24px;
+            border-radius: 25px;
+            display: inline-block;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+        }
+
+        /* ========== Main Content Styles ========== */
+        .main-content {
+            background: white;
+            border-radius: 20px;
+            padding: 40px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            margin-bottom: 30px;
+        }
+
+        /* ========== Input Section Styles ========== */
+        .input-section {
+            margin-bottom: 30px;
+        }
+
+        .input-section label {
+            display: block;
+            margin-bottom: 10px;
+            font-size: 1.1em;
+            font-weight: 600;
+            color: #333;
+        }
+
+        .input-section textarea {
+            width: 100%;
+            padding: 15px;
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            font-size: 1em;
+            font-family: inherit;
+            resize: vertical;
+            min-height: 100px;
+            transition: border-color 0.3s ease;
+        }
+
+        .input-section textarea:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        /* ========== Button Styles ========== */
+        .btn {
+            padding: 12px 30px;
+            border: none;
+            border-radius: 10px;
+            font-size: 1em;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            width: 100%;
+            padding: 15px;
+            font-size: 1.1em;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn-primary:active {
+            transform: translateY(0);
+        }
+
+        .btn-vote {
+            width: 100%;
+            padding: 12px;
+            font-size: 1em;
+            margin-top: 15px;
+        }
+
+        .btn-vote-a {
+            background: #4CAF50;
+            color: white;
+        }
+
+        .btn-vote-a:hover {
+            background: #45a049;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(76, 175, 80, 0.3);
+        }
+
+        .btn-vote-b {
+            background: #2196F3;
+            color: white;
+        }
+
+        .btn-vote-b:hover {
+            background: #0b7dda;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(33, 150, 243, 0.3);
+        }
+
+        /* ========== Response Section Styles ========== */
+        .response-section {
+            margin-bottom: 30px;
+        }
+
+        .response-section h2 {
+            text-align: center;
+            margin-bottom: 20px;
+            color: #333;
+            font-size: 1.5em;
+        }
+
+        .responses-container {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+
+        .response-card {
+            background: #f8f9fa;
+            border-radius: 15px;
+            padding: 25px;
+            border: 2px solid #e0e0e0;
+            transition: all 0.3s ease;
+        }
+
+        .response-card:hover {
+            border-color: #667eea;
+            box-shadow: 0 10px 30px rgba(102, 126, 234, 0.15);
+            transform: translateY(-3px);
+        }
+
+        .response-card h3 {
+            margin-bottom: 15px;
+            color: #667eea;
+            font-size: 1.3em;
+        }
+
+        .response-card p {
+            line-height: 1.6;
+            color: #555;
+            margin-bottom: 15px;
+        }
+
+        .response-loading {
+            text-align: center;
+            padding: 40px;
+            color: #999;
+            font-style: italic;
+        }
+
+        /* ========== Feedback Message Styles ========== */
+        .feedback-message {
+            text-align: center;
+            padding: 15px;
+            background: #d4edda;
+            color: #155724;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            border: 1px solid #c3e6cb;
+            display: none;
+            animation: slideIn 0.3s ease;
+        }
+
+        .feedback-message.show {
+            display: block;
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(-10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* ========== History Section Styles ========== */
+        .history-section {
+            background: white;
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+        }
+
+        .history-section h2 {
+            margin-bottom: 20px;
+            color: #333;
+            font-size: 1.5em;
+        }
+
+        .history-list {
+            list-style: none;
+        }
+
+        .history-item {
+            padding: 15px;
+            background: #f8f9fa;
+            border-left: 4px solid #667eea;
+            margin-bottom: 10px;
+            border-radius: 5px;
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+
+        .history-item:hover {
+            background: #e8ecf1;
+            transform: translateX(5px);
+        }
+
+        .history-empty {
+            text-align: center;
+            color: #999;
+            padding: 20px;
+            font-style: italic;
+        }
+
+        /* ========== Responsive Design ========== */
+        @media (max-width: 768px) {
+            .header h1 {
+                font-size: 2em;
+            }
+
+            .main-content {
+                padding: 20px;
+            }
+
+            .responses-container {
+                grid-template-columns: 1fr;
+            }
+
+            .response-card {
+                padding: 15px;
+            }
+        }
+
+        /* ========== Hidden Class ========== */
+        .hidden {
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- ========== Header Section ========== -->
+        <div class="header">
+            <h1>AI Response Battle</h1>
+            <div class="credit-counter">User Credits: <span id="creditCount">0</span></div>
+        </div>
+
+        <!-- ========== Main Content Section ========== -->
+        <div class="main-content">
+            <!-- Input Section -->
+            <div class="input-section">
+                <label for="promptInput">Ask a Question:</label>
+                <textarea id="promptInput" placeholder="Type your question here..."></textarea>
+            </div>
+
+            <!-- Generate Button -->
+            <button class="btn btn-primary" id="generateBtn">Generate AI Responses</button>
+
+            <!-- Feedback Message -->
+            <div class="feedback-message" id="feedbackMessage">Thank you for your feedback!</div>
+
+            <!-- Response Section -->
+            <div class="response-section" id="responseSection" style="display: none;">
+                <h2>AI Responses</h2>
+                <div class="responses-container">
+                    <!-- AI Model A Response Card -->
+                    <div class="response-card">
+                        <h3>🤖 AI Model A</h3>
+                        <p id="responseA" class="response-loading">Generating response...</p>
+                        <button class="btn btn-vote btn-vote-a" id="voteABtn">Vote AI A</button>
+                    </div>
+
+                    <!-- AI Model B Response Card -->
+                    <div class="response-card">
+                        <h3>🧠 AI Model B</h3>
+                        <p id="responseB" class="response-loading">Generating response...</p>
+                        <button class="btn btn-vote btn-vote-b" id="voteBBtn">Vote AI B</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ========== History Section ========== -->
+        <div class="history-section">
+            <h2>📝 Previous Prompts</h2>
+            <ul class="history-list" id="historyList">
+                <li class="history-empty">No prompts yet. Start by asking a question!</li>
+            </ul>
+        </div>
+    </div>
+
+    <script>
+        // ========== Mock AI Responses Database ========== 
+        // This array contains predefined AI responses for demo purposes
+        const mockResponses = [
+            {
+                A: "The future of artificial intelligence will be shaped by advancements in neural networks and quantum computing. We can expect more sophisticated language models and improved accuracy in specialized domains like medical diagnosis and scientific research.",
+                B: "AI will continue to evolve with better integration into everyday life. The key developments will focus on making AI more interpretable, reducing computational costs, and ensuring ethical guidelines are followed globally."
+            },
+            {
+                A: "Machine learning is a subset of artificial intelligence that focuses on teaching computers to learn from data without explicit programming. The main types include supervised learning, unsupervised learning, and reinforcement learning.",
+                B: "Machine learning enables systems to improve their performance over time through exposure to data. Common applications include image recognition, natural language processing, recommendation systems, and predictive analytics."
+            },
+            {
+                A: "Cloud computing has revolutionized how businesses deploy applications and manage data. It offers scalability, cost-effectiveness, and flexibility while reducing the need for physical infrastructure maintenance.",
+                B: "The cloud allows organizations to focus on their core business while outsourcing infrastructure management. Major providers like AWS, Azure, and Google Cloud offer comprehensive services for computing, storage, and analytics."
+            },
+            {
+                A: "Web development involves creating interactive and visually appealing websites using HTML, CSS, and JavaScript. Modern frameworks like React and Vue.js have significantly improved development efficiency and user experience.",
+                B: "Frontend development is about creating user interfaces that are responsive, accessible, and performant. Best practices include using semantic HTML, CSS grid/flexbox, and optimizing JavaScript for faster page loads."
+            },
+            {
+                A: "Data science combines statistics, programming, and domain expertise to extract meaningful insights from data. The process typically involves data collection, cleaning, analysis, visualization, and communication of results.",
+                B: "Data scientists use various tools and languages like Python, R, and SQL to analyze complex datasets. They employ techniques such as regression, clustering, and deep learning to solve real-world business problems."
+            }
+        ];
+
+        // ========== DOM Elements ========== 
+        const promptInput = document.getElementById('promptInput');
+        const generateBtn = document.getElementById('generateBtn');
+        const responseSection = document.getElementById('responseSection');
+        const responseA = document.getElementById('responseA');
+        const responseB = document.getElementById('responseB');
+        const voteABtn = document.getElementById('voteABtn');
+        const voteBBtn = document.getElementById('voteBBtn');
+        const feedbackMessage = document.getElementById('feedbackMessage');
+        const creditCountDisplay = document.getElementById('creditCount');
+        const historyList = document.getElementById('historyList');
+
+        // ========== Constants ========== 
+        const CREDITS_PER_VOTE = 5;
+        const STORAGE_KEY_CREDITS = 'aiBattleCredits';
+        const STORAGE_KEY_HISTORY = 'aiBattleHistory';
+
+        // ========== Initialize Application ========== 
+        // Load saved credits and history from localStorage on page load
+        function initializeApp() {
+            loadCredits();
+            loadHistory();
+        }
+
+        // ========== Credit Management Functions ========== 
+        // Load credits from localStorage
+        function loadCredits() {
+            const savedCredits = localStorage.getItem(STORAGE_KEY_CREDITS);
+            const credits = savedCredits ? parseInt(savedCredits) : 0;
+            creditCountDisplay.textContent = credits;
+        }
+
+        // Save credits to localStorage
+        function saveCredits(credits) {
+            localStorage.setItem(STORAGE_KEY_CREDITS, credits);
+        }
+
+        // Get current credits from display
+        function getCurrentCredits() {
+            return parseInt(creditCountDisplay.textContent);
+        }
+
+        // Add credits and update display
+        function addCredits(amount) {
+            const currentCredits = getCurrentCredits();
+            const newCredits = currentCredits + amount;
+            creditCountDisplay.textContent = newCredits;
+            saveCredits(newCredits);
+        }
+
+        // ========== History Management Functions ========== 
+        // Load history from localStorage
+        function loadHistory() {
+            const savedHistory = localStorage.getItem(STORAGE_KEY_HISTORY);
+            const history = savedHistory ? JSON.parse(savedHistory) : [];
+            displayHistory(history);
+        }
+
+        // Save history to localStorage
+        function saveHistory(history) {
+            localStorage.setItem(STORAGE_KEY_HISTORY, JSON.stringify(history));
+        }
+
+        // Add prompt to history
+        function addToHistory(prompt) {
+            const savedHistory = localStorage.getItem(STORAGE_KEY_HISTORY);
+            const history = savedHistory ? JSON.parse(savedHistory) : [];
+            
+            // Add new prompt to the beginning of the array
+            history.unshift({
+                prompt: prompt,
+                timestamp: new Date().toLocaleString()
+            });
+
+            // Keep only the last 10 prompts
+            if (history.length > 10) {
+                history.pop();
+            }
+
+            saveHistory(history);
+            displayHistory(history);
+        }
+
+        // Display history in the UI
+        function displayHistory(history) {
+            if (history.length === 0) {
+                historyList.innerHTML = '<li class="history-empty">No prompts yet. Start by asking a question!</li>';
+                return;
+            }
+
+            historyList.innerHTML = history.map((item, index) => `
+                <li class="history-item">
+                    <strong>${item.prompt}</strong>
+                    <br>
+                    <small style="color: #999;">${item.timestamp}</small>
+                </li>
+            `).join('');
+        }
+
+        // ========== AI Response Generation Functions ========== 
+        // Get random mock response pair
+        function getRandomResponses() {
+            const randomIndex = Math.floor(Math.random() * mockResponses.length);
+            return mockResponses[randomIndex];
+        }
+
+        // Simulate response generation with delay
+        async function generateResponses() {
+            // Show loading state
+            responseSection.style.display = 'block';
+            responseA.textContent = 'Generating response...';
+            responseA.className = 'response-loading';
+            responseB.textContent = 'Generating response...';
+            responseB.className = 'response-loading';
+
+            // Simulate API delay (1.5 seconds)
+            await new Promise(resolve => setTimeout(resolve, 1500));
+
+            // Get random responses
+            const responses = getRandomResponses();
+            
+            // Update response cards
+            responseA.textContent = responses.A;
+            responseA.className = '';
+            responseB.textContent = responses.B;
+            responseB.className = '';
+        }
+
+        // ========== Event Listeners ========== 
+        // Generate button click handler
+        generateBtn.addEventListener('click', async () => {
+            const prompt = promptInput.value.trim();
+
+            // Validate input
+            if (prompt === '') {
+                alert('Please enter a question');
+                return;
+            }
+
+            // Hide feedback message when generating new responses
+            feedbackMessage.classList.remove('show');
+
+            // Add prompt to history
+            addToHistory(prompt);
+
+            // Generate responses
+            await generateResponses();
+        });
+
+        // Vote A button click handler
+        voteABtn.addEventListener('click', () => {
+            handleVote('A');
+        });
+
+        // Vote B button click handler
+        voteBBtn.addEventListener('click', () => {
+            handleVote('B');
+        });
+
+        // ========== Vote Handler Function ========== 
+        // Handle vote and update credits
+        function handleVote(modelName) {
+            // Add credits
+            addCredits(CREDITS_PER_VOTE);
+
+            // Show feedback message
+            feedbackMessage.classList.add('show');
+
+            // Hide feedback message after 3 seconds
+            setTimeout(() => {
+                feedbackMessage.classList.remove('show');
+            }, 3000);
+
+            // Disable vote buttons temporarily to prevent multiple votes
+            voteABtn.disabled = true;
+            voteBBtn.disabled = true;
+
+            // Re-enable buttons after 2 seconds
+            setTimeout(() => {
+                voteABtn.disabled = false;
+                voteBBtn.disabled = false;
+            }, 2000);
+        }
+
+        // ========== Initialize App on Page Load ========== 
+        window.addEventListener('DOMContentLoaded', initializeApp);
+    </script>
+</body>
+</html>
