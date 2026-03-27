@@ -1,0 +1,553 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>AIGENIX PRO — Single File (Groq)</title>
+
+  <!--
+  INSTRUCTIONS:
+
+  Recommended deployment on Vercel:
+  1. Add an Environment Variable in your Vercel Project: GROQ_API_KEY = <your-secret-key>
+  2. Create a serverless function at /api/groq (example Node/Edge function code included below in comments).
+  3. Deploy this index.html as your static site (e.g., put in the repo root or in 'public' and set as root).
+  4. The frontend will call /api/groq; the serverless function will forward the request securely to https://api.groq.com/openai/v1/chat/completions.
+
+  Example Vercel serverless function (api/groq.js - Node):
+  -----------------------------------------------------
+  // api/groq.js
+  export default async function handler(req, res) {
+    if (req.method !== 'POST') {
+      res.status(405).json({ error: 'Method not allowed' });
+      return;
+    }
+    const GROQ_API_KEY = process.env.GROQ_API_KEY;
+    if (!GROQ_API_KEY) return res.status(500).json({ error: 'GROQ_API_KEY not set' });
+
+    try {
+      const body = await req.json(); // pass-through object: model, messages, etc.
+      const groqRes = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${GROQ_API_KEY}`
+        },
+        body: JSON.stringify(body)
+      });
+      const data = await groqRes.json();
+      res.status(groqRes.status).json(data);
+    } catch (err) {
+      console.error(err);
+      res.status(500).json({ error: 'Proxy error' });
+    }
+  }
+  -----------------------------------------------------
+
+  Note: For Vercel Edge Functions the code shape differs slightly. Use Node serverless if unsure.
+
+  If you must call Groq directly from the browser (not recommended), set window.GROQ_API_KEY at build time (unsafe).
+  -->
+
+  <style>
+    :root{
+      --bg:#06060f; --muted:rgba(255,255,255,0.36); --card:rgba(255,255,255,0.03);
+      --accent1:#8b5cf6; --accent2:#ec4899; --g:linear-gradient(135deg,var(--accent1),var(--accent2));
+      --glass:rgba(255,255,255,0.04);
+    }
+    html,body{height:100%;margin:0;font-family:system-ui,Segoe UI,Roboto,Helvetica,Arial,sans-serif;background:var(--bg);color:#e8e6f4}
+    .nav{position:sticky;top:0;z-index:50;background:rgba(6,6,15,0.92);backdrop-filter:blur(14px);border-bottom:1px solid rgba(255,255,255,0.06);display:flex;align-items:center;justify-content:space-between;padding:10px 20px;height:64px}
+    .brand{display:flex;align-items:center;gap:10px;cursor:pointer}
+    .logo{width:36px;height:36px;border-radius:8px;background:var(--g);display:flex;align-items:center;justify-content:center;font-weight:800}
+    .menu{display:flex;gap:10px}
+    .navbtn{padding:8px 12px;border-radius:8px;border:0;background:transparent;color:rgba(255,255,255,0.45);cursor:pointer;font-weight:600}
+    .navbtn.active{background:rgba(139,92,246,0.12);color:#c4b5fd}
+    .cred{display:flex;gap:8px;align-items:center;background:rgba(255,255,255,0.04);padding:6px 12px;border-radius:40px;border:1px solid rgba(255,255,255,0.06)}
+    main{padding:28px;max-width:1100px;margin:0 auto}
+    .hero{text-align:center;padding:56px 12px 28px}
+    .hero h1{font-size:clamp(32px,5vw,56px);margin:0;font-weight:800;line-height:1.05}
+    .hero p{color:var(--muted);max-width:640px;margin:14px auto 24px}
+    .searchbar{display:flex;gap:10px;max-width:720px;margin:14px auto;border-radius:18px;padding:8px 12px;background:var(--card);border:1px solid rgba(255,255,255,0.06);align-items:center}
+    .searchbar input{flex:1;background:transparent;border:0;padding:12px;color:inherit;font-size:15px;outline:none}
+    .btn{padding:10px 14px;border-radius:12px;border:0;background:var(--g);color:#fff;font-weight:800;cursor:pointer}
+    .tools-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:12px;margin-top:28px}
+    .card{padding:18px;border-radius:14px;background:var(--card);border:1px solid rgba(255,255,255,0.06);cursor:pointer;transition:all .18s}
+    .card:hover{transform:translateY(-4px);background:rgba(139,92,246,0.08);border-color:rgba(139,92,246,0.25)}
+    .studio{max-width:960px;margin:20px auto 80px;padding:18px;border-radius:16px;background:rgba(255,255,255,0.02);border:1px solid rgba(255,255,255,0.04)}
+    .tool-list{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:14px}
+    .tool-btn{padding:6px 12px;border-radius:20px;border:1px solid rgba(255,255,255,0.06);background:transparent;color:rgba(255,255,255,0.45);cursor:pointer}
+    .tool-btn.active{background:rgba(139,92,246,0.12);border-color:rgba(139,92,246,0.28);color:#c4b5fd}
+    textarea,input.full{width:100%;padding:14px;border-radius:12px;border:1px solid rgba(255,255,255,0.06);background:transparent;color:inherit;resize:vertical;outline:none}
+    .muted{color:var(--muted);font-size:13px}
+    .output{margin-top:18px;border-radius:12px;padding:18px;background:rgba(255,255,255,0.02);border:1px solid rgba(139,92,246,0.14);max-height:520px;overflow:auto;white-space:pre-wrap;word-break:break-word}
+    .row{display:flex;gap:8px;align-items:center}
+    .right{margin-left:auto}
+    .toast{position:fixed;right:20px;top:20px;padding:12px 18px;border-radius:12px;z-index:9999;backdrop-filter:blur(8px);box-shadow:0 8px 24px rgba(0,0,0,0.5);font-weight:700}
+    .toast.success{background:rgba(16,185,129,0.12);border:1px solid rgba(16,185,129,0.25);color:#6ee7b7}
+    .toast.error{background:rgba(239,68,68,0.12);border:1px solid rgba(239,68,68,0.25);color:#fca5a5}
+    .pricing-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px}
+    .plan{padding:18px;border-radius:12px;background:var(--card);border:1px solid rgba(255,255,255,0.06)}
+    .earn-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:12px}
+    .small{font-size:13px;color:var(--muted)}
+    footer{padding:28px 18px;border-top:1px solid rgba(255,255,255,0.04);display:flex;gap:12px;align-items:center;justify-content:space-between;flex-wrap:wrap}
+    @media(max-width:720px){.nav{padding:10px}; .hero{padding:28px 12px}}
+  </style>
+</head>
+<body>
+  <div class="nav">
+    <div class="brand" id="homeBtn">
+      <div class="logo">⚡</div>
+      <div>
+        <div style="font-weight:800">AIGENIX</div>
+        <div style="font-size:11px;color:rgba(255,255,255,0.24)">PRO</div>
+      </div>
+    </div>
+
+    <div class="menu">
+      <button class="navbtn active" data-page="home">Home</button>
+      <button class="navbtn" data-page="studio">Studio</button>
+      <button class="navbtn" data-page="pricing">Pricing</button>
+      <button class="navbtn" data-page="earn">Earn Free</button>
+    </div>
+
+    <div style="display:flex;gap:12px;align-items:center">
+      <div class="cred"><span>⚡</span><strong id="credits">30</strong><span style="font-size:12px;color:rgba(255,255,255,0.36)">credits</span></div>
+      <button class="btn" id="upgradeBtn">Upgrade ↗</button>
+    </div>
+  </div>
+
+  <main>
+    <section class="hero" id="homePage">
+      <h1>21 AI Tools.<br /><span style="-webkit-background-clip:text;-webkit-text-fill-color:transparent;background:var(--g)">One Platform.</span></h1>
+      <p>Write, generate images, create video scripts — powered by AI. Free to start.</p>
+
+      <div class="searchbar">
+        <span style="font-size:18px">✨</span>
+        <input id="globalPrompt" placeholder="Describe what you want to create..." />
+        <button class="btn" id="toStudio">Create →</button>
+      </div>
+      <p class="small">30 free credits · No card required</p>
+    </section>
+
+    <section id="toolsSection">
+      <h3 style="margin:0;color:#fff">All Tools</h3>
+      <div style="margin:10px 0 20px;display:flex;gap:8px;flex-wrap:wrap">
+        <button class="tool-filter" data-cat="All">All</button>
+        <button class="tool-filter" data-cat="Text">Text</button>
+        <button class="tool-filter" data-cat="Image">Image</button>
+        <button class="tool-filter" data-cat="Video">Video</button>
+        <button class="tool-filter" data-cat="Biz">Biz</button>
+      </div>
+
+      <div class="tools-grid" id="toolsGrid"></div>
+    </section>
+
+    <section id="studioPage" class="studio" style="display:none">
+      <h3 style="margin:0 0 10px">AI Studio</h3>
+
+      <div style="margin-bottom:12px">
+        <div style="font-size:11px;color:rgba(255,255,255,0.28);margin-bottom:8px">SELECT TOOL</div>
+        <div id="toolPicker" class="tool-list"></div>
+      </div>
+
+      <div id="toolInfo" style="display:none;padding:12px;border-radius:12px;margin-bottom:12px;background:rgba(139,92,246,0.06);border:1px solid rgba(139,92,246,0.14)"></div>
+
+      <textarea id="studioPrompt" rows="6" placeholder="Select a tool and describe what you want..." style="min-height:120px"></textarea>
+
+      <div style="display:flex;gap:12px;align-items:center;margin-top:12px">
+        <button class="btn" id="generateBtn">✨ Generate</button>
+        <div class="small">Credits left: <strong id="credits2">30</strong></div>
+        <div class="right">
+          <button id="clearBtn" class="tool-btn">Clear</button>
+        </div>
+      </div>
+
+      <div id="studioOutput" style="display:none">
+        <div style="display:flex;align-items:center;gap:8px;margin-top:18px">
+          <div style="font-size:12px;color:rgba(255,255,255,0.26)">OUTPUT</div>
+          <div class="right">
+            <button id="copyBtn" class="tool-btn">📋 Copy</button>
+          </div>
+        </div>
+        <div class="output" id="outputBox"></div>
+      </div>
+
+      <div id="historyWrap" style="margin-top:20px;display:none">
+        <div style="font-size:11px;color:rgba(255,255,255,0.22);margin-bottom:8px">RECENT</div>
+        <div id="historyList" style="display:flex;flex-direction:column;gap:8px"></div>
+      </div>
+    </section>
+
+    <section id="pricingPage" style="display:none;padding-top:18px">
+      <h3 style="margin:0 0 10px">Simple Pricing</h3>
+      <div class="pricing-grid" id="pricingGrid"></div>
+    </section>
+
+    <section id="earnPage" style="display:none;padding-top:18px">
+      <h3 style="margin:0 0 10px">Earn Free Credits</h3>
+      <div class="earn-grid" id="earnGrid"></div>
+
+      <div style="margin-top:18px;padding:18px;border-radius:12px;background:rgba(139,92,246,0.06);border:1px solid rgba(139,92,246,0.12)">
+        <div style="font-weight:800">🎁 Refer & Earn</div>
+        <div class="small" style="margin:8px 0">You get <strong style="color:#c4b5fd">+15 credits</strong> · Friend gets <strong style="color:#c4b5fd">+10 credits</strong></div>
+        <div style="display:flex;gap:8px;align-items:center;max-width:420px">
+          <div style="flex:1;background:rgba(255,255,255,0.03);padding:10px;border-radius:10px;font-family:monospace">aigenix.app/ref/user4829</div>
+          <button id="copyRef" class="btn">Copy</button>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <div id="toastRoot"></div>
+
+  <footer>
+    <div style="display:flex;gap:8px;align-items:center">
+      <div style="width:28px;height:28px;border-radius:6px;background:var(--g);display:flex;align-items:center;justify-content:center">⚡</div>
+      <div style="font-weight:800;color:rgba(255,255,255,0.4)">AIGENIX PRO</div>
+    </div>
+    <div class="small">12 AI Tools · Free to start</div>
+    <div style="display:flex;gap:18px" class="small">
+      <div>Privacy</div>
+      <div>Terms</div>
+      <div>Contact</div>
+    </div>
+  </footer>
+
+  <script>
+  /*************************************************************************
+   * CLIENT SCRIPT — single-file
+   *
+   * Behavior:
+   * - UI management (tools, studio, pricing, earn)
+   * - Calls Groq API via:
+   *     a) Proxy: POST /api/groq  (recommended — create a serverless function that uses process.env.GROQ_API_KEY)
+   *     b) Direct: use window.GROQ_API_KEY (UNSAFE — only for local testing)
+   *
+   * Groq API endpoint: https://api.groq.com/openai/v1/chat/completions
+   * Model: mixtral-8x7b-32768
+   *
+   * If you need the serverless function, use the example in the top comments.
+   *************************************************************************/
+
+  // CONFIG
+  const GROQ_API_URL = 'https://api.groq.com/openai/v1/chat/completions';
+  const GROQ_MODEL = 'mixtral-8x7b-32768';
+
+  // The recommended production flow: create /api/groq serverless function and do NOT put secrets on the client.
+  // For local testing only (unsafe) you may set window.GROQ_API_KEY manually from browser console:
+  // window.GROQ_API_KEY = 'sk-...'
+
+  // Data (tools, prompts, plans) — simplified from your provided app
+  const TOOLS = [
+    {id:"writer",cat:"Text",icon:"✍️",name:"AI Writer",desc:"Blog posts & articles",cost:3,tag:"Popular"},
+    {id:"caption",cat:"Text",icon:"📱",name:"Caption Generator",desc:"Instagram, YouTube, TikTok captions",cost:2,tag:""},
+    {id:"email",cat:"Text",icon:"📧",name:"Email Writer",desc:"Cold emails & newsletters",cost:2,tag:""},
+    {id:"resume",cat:"Text",icon:"📄",name:"Resume Builder",desc:"ATS-optimized resumes",cost:4,tag:"New"},
+    {id:"imagine",cat:"Image",icon:"🎨",name:"Image Generator",desc:"AI art from text prompts",cost:5,tag:"🔥 Hot"},
+    {id:"logo",cat:"Image",icon:"🏷️",name:"Logo Concept",desc:"Professional logo brief",cost:3,tag:""},
+    {id:"vidscript",cat:"Video",icon:"🎬",name:"Video Script",desc:"YouTube scripts with hooks",cost:4,tag:"Popular"},
+    {id:"shorts",cat:"Video",icon:"📲",name:"Shorts Script",desc:"60-second viral scripts",cost:3,tag:""},
+    {id:"business",cat:"Biz",icon:"💼",name:"Business Ideas",desc:"Profitable niche ideas",cost:3,tag:""},
+    {id:"hashtag",cat:"Biz",icon:"#️⃣",name:"Hashtag Strategy",desc:"30 viral hashtags",cost:1,tag:""},
+  ];
+
+  const PROMPTS = {
+    writer:    q=>`Write a comprehensive, engaging article about: "${q}". Use H2 headings, intro, main sections, and a strong conclusion. Use markdown.`,
+    caption:   q=>`Create 6 scroll-stopping social media captions for: "${q}". Mix tones, add emojis and CTA. Include 10 hashtags. Number each.`,
+    email:     q=>`Write a compelling email for: "${q}". Include: 2 subject line options, preview text, hook, body, CTA, sign-off.`,
+    resume:    q=>`Create a professional resume section for: "${q}". Include: Summary (3 lines), 10 Skills, 3 achievement bullets with metrics, Headline.`,
+    imagine:   q=>`Write 3 detailed AI image generation prompts for: "${q}". Each must include subject, art style, lighting, mood, color palette, camera angle, quality tags. Number clearly.`,
+    logo:      q=>`Create a logo design brief for: "${q}". Include: Brand personality, Color palette (hex), Typography, 3 Logo concepts, Icon style.`,
+    vidscript: q=>`Write a complete YouTube script for: "${q}". Structure: HOOK (15s), INTRO (30s), MAIN (4-5 points), MID CTA, OUTRO (30s).`,
+    shorts:    q=>`Write a 60-second Reels/Shorts script for: "${q}". Structure: 0-3s HOOK, 3-15s SETUP, 15-45s VALUE, 45-55s PAYOFF, 55-60s CTA.`,
+    business:  q=>`Generate 5 profitable business ideas for: "${q}". For each: Name, Pitch, Problem, Target customer, Revenue model, 30-day launch plan.`,
+    hashtag:   q=>`Create hashtag strategy for: "${q}". 30 hashtags in 3 tiers: High Volume (10), Medium (10), Niche (10). Include best posting times.`,
+  };
+
+  const PLANS = [
+    {id:"m1",label:"1 Month",price:199,credits:400,popular:false,save:"",badge:"Starter"},
+    {id:"m2",label:"2 Months",price:499,credits:1000,popular:true,save:"Save 20%",badge:"Best Value"},
+    {id:"m3",label:"3 Months",price:699,credits:1600,popular:false,save:"Save 30%",badge:"Pro"},
+    {id:"y1",label:"1 Year",price:2999,credits:9999,popular:false,save:"Save 58%",badge:"Unlimited"},
+  ];
+
+  const EARN = [
+    { id:"watch", icon:"📺", label:"Watch Ad", credits:3, duration:3500 },
+    { id:"daily", icon:"🗓️", label:"Daily Bonus", credits:3, duration:1200 },
+    { id:"share", icon:"🔗", label:"Share App", credits:5, duration:2000 },
+    { id:"refer", icon:"👥", label:"Refer Friend", credits:15, duration:2000 },
+  ];
+
+  // App state
+  const state = {
+    credits: 30,
+    page: 'home',
+    category: 'All',
+    selectedTool: null,
+    history: [],
+    toastTimer: null,
+    earnDone: {},
+    earnBusy: {}
+  };
+
+  // Simple helpers
+  const $ = s => document.querySelector(s);
+  const $$ = s => Array.from(document.querySelectorAll(s));
+
+  function showToast(msg, type='success'){
+    clearTimeout(state.toastTimer);
+    const root = $('#toastRoot');
+    root.innerHTML = '';
+    const el = document.createElement('div');
+    el.className = 'toast ' + (type==='error' ? 'error' : 'success');
+    el.textContent = (type==='error' ? '⚠ ' : '✓ ') + msg;
+    root.appendChild(el);
+    state.toastTimer = setTimeout(()=> root.innerHTML = '', 3000);
+  }
+
+  function setPage(page){
+    state.page = page;
+    $$('.navbtn').forEach(b => b.classList.toggle('active', b.dataset.page===page));
+    $('#homePage').style.display = page==='home' ? 'block' : 'none';
+    $('#studioPage').style.display = page==='studio' ? 'block' : 'none';
+    $('#pricingPage').style.display = page==='pricing' ? 'block' : 'none';
+    $('#earnPage').style.display = page==='earn' ? 'block' : 'none';
+  }
+
+  function renderTools(filter='All'){
+    const grid = $('#toolsGrid');
+    grid.innerHTML = '';
+    const filtered = TOOLS.filter(t => filter==='All' || t.cat===filter);
+    filtered.forEach(t => {
+      const c = document.createElement('div');
+      c.className = 'card';
+      c.innerHTML = `
+        <div style="font-size:24px">${t.icon}</div>
+        <div style="font-weight:700;margin-top:8px">${t.name}</div>
+        <div style="color:var(--muted);font-size:13px;margin-top:6px">${t.desc}</div>
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-top:12px">
+          <div style="font-size:12px;color:#a78bfa;background:rgba(139,92,246,0.08);padding:6px;border-radius:16px">⚡ ${t.cost} credits</div>
+          ${t.tag ? '<div style="font-size:12px;color:#c4b5fd;background:rgba(139,92,246,0.08);padding:6px;border-radius:12px">'+t.tag+'</div>':''}
+        </div>`;
+      c.addEventListener('click', ()=> openTool(t));
+      grid.appendChild(c);
+    });
+  }
+
+  function renderPicker(){
+    const picker = $('#toolPicker');
+    picker.innerHTML = '';
+    TOOLS.forEach(t => {
+      const btn = document.createElement('button');
+      btn.className = 'tool-btn';
+      btn.textContent = t.icon + ' ' + t.name;
+      btn.addEventListener('click', ()=>{
+        selectTool(t);
+        $$('.tool-btn').forEach(x=>x.classList.toggle('active', x===btn));
+      });
+      picker.appendChild(btn);
+    });
+  }
+
+  function selectTool(t){
+    state.selectedTool = t;
+    $('#toolInfo').style.display = 'block';
+    $('#toolInfo').innerHTML = '<strong style="font-size:16px">'+t.icon+' '+t.name+'</strong><div class="small" style="margin-top:6px">'+t.desc+'</div>';
+    $('#studioPrompt').placeholder = 'Describe what you want from ' + t.name + '...';
+  }
+
+  function updateCredits(){
+    $('#credits').textContent = state.credits;
+    $('#credits2').textContent = state.credits;
+  }
+
+  // Fetch wrapper: uses proxy /api/groq if window.GROQ_API_KEY not present
+  async function fetchGroqAPI(promptText, opts = {}) {
+    const body = {
+      model: GROQ_MODEL,
+      max_tokens: opts.max_tokens || 800,
+      messages: [{ role: 'user', content: PROMPTS[state.selectedTool.id ? state.selectedTool.id : 'writer'](promptText) }]
+    };
+
+    // Prefer serverless proxy at /api/groq (recommended). If GROQ_API_KEY is set on window, will call directly.
+    const directKey = (window.GROQ_API_KEY && typeof window.GROQ_API_KEY === 'string' && window.GROQ_API_KEY.length>0) ? window.GROQ_API_KEY : null;
+
+    if (directKey) {
+      // Direct call (unsafe in production)
+      const res = await fetch(GROQ_API_URL, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer ' + directKey
+        },
+        body: JSON.stringify(body)
+      });
+      if (!res.ok) {
+        const text = await res.text().catch(()=>res.statusText);
+        throw new Error('Groq API error: ' + res.status + ' ' + text);
+      }
+      return res.json();
+    } else {
+      // Proxy mode: call your serverless endpoint that uses GROQ_API_KEY from env
+      const res = await fetch('/api/groq', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body)
+      });
+      if (!res.ok) {
+        const text = await res.text().catch(()=>res.statusText);
+        throw new Error('Proxy error: ' + res.status + ' ' + text);
+      }
+      return res.json();
+    }
+  }
+
+  async function generate(){
+    const promptText = (document.getElementById('studioPrompt').value || '').trim();
+    if (!promptText) return showToast('Enter a prompt first!', 'error');
+    if (!state.selectedTool) return showToast('Select a tool first!', 'error');
+    if (state.credits < state.selectedTool.cost) return showToast('Not enough credits!', 'error');
+
+    $('#studioOutput').style.display='none';
+    $('#outputBox').textContent = '';
+    $('#generateBtn').textContent = '⟳ Generating...';
+    $('#generateBtn').disabled = true;
+
+    try {
+      const data = await fetchGroqAPI(promptText, { max_tokens: 1200 });
+      // Groq/OpenAI-compatible response commonly has choices[0].message.content
+      let text = '';
+      try {
+        text = data.choices?.[0]?.message?.content ?? data.choices?.[0]?.text ?? JSON.stringify(data);
+      } catch (e) { text = JSON.stringify(data) }
+      $('#outputBox').textContent = text;
+      $('#studioOutput').style.display = 'block';
+
+      state.credits = Math.max(0, state.credits - state.selectedTool.cost);
+      state.history.unshift({ id: Date.now(), icon: state.selectedTool.icon, name: state.selectedTool.name, snippet: promptText.slice(0,40) });
+      if (state.history.length > 10) state.history.length = 10;
+      renderHistory();
+      updateCredits();
+      showToast('Done! −' + state.selectedTool.cost + ' credits');
+      setTimeout(()=> document.getElementById('outputBox').scrollIntoView({ behavior:'smooth' }), 120);
+    } catch (err) {
+      console.error(err);
+      showToast(err.message || 'Network error', 'error');
+    } finally {
+      $('#generateBtn').textContent = '✨ Generate';
+      $('#generateBtn').disabled = false;
+    }
+  }
+
+  function renderHistory(){
+    const list = $('#historyList');
+    list.innerHTML = '';
+    if (!state.history.length) { $('#historyWrap').style.display = 'none'; return; }
+    $('#historyWrap').style.display = 'block';
+    state.history.forEach(h => {
+      const d = document.createElement('div');
+      d.style.display='flex'; d.style.alignItems='center'; d.style.gap='8px'; d.style.padding='8px'; d.style.borderRadius='8px'; d.style.background='rgba(255,255,255,0.02)';
+      d.innerHTML = `<div>${h.icon}</div><div style="color:#a78bfa;font-weight:600">${h.name}</div><div style="flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${h.snippet}...</div>`;
+      list.appendChild(d);
+    });
+  }
+
+  function renderPricing(){
+    const grid = $('#pricingGrid');
+    grid.innerHTML = '';
+    // Free
+    const free = document.createElement('div'); free.className = 'plan';
+    free.innerHTML = '<div style="font-weight:800;color:rgba(255,255,255,0.4)">FREE</div><div style="font-size:28px;font-weight:800">₹0</div><div class="small">Forever</div><div style="margin-top:12px"><button class="btn" id="startFree">Start Free</button></div>';
+    grid.appendChild(free);
+    PLANS.forEach(p=>{
+      const el = document.createElement('div'); el.className='plan';
+      el.innerHTML = '<div style="display:flex;justify-content:space-between;align-items:center"><div style="font-weight:800">'+p.badge+'</div>'+(p.save?'<div style="font-size:12px;color:#6ee7b7">'+p.save+'</div>':'')+'</div><div style="font-size:24px;font-weight:800;margin-top:8px">₹'+p.price+'</div><div class="small" style="margin:6px 0">'+p.label+'</div><div style="margin-top:12px"><button class="btn buyplan">Buy '+p.badge+'</button></div>';
+      el.querySelector('.buyplan').addEventListener('click', ()=> {
+        if (!confirm('Simulate purchase of '+p.badge+' for ₹'+p.price+'?')) return;
+        state.credits += p.credits;
+        updateCredits();
+        showToast(p.badge+' activated! +'+p.credits+' credits');
+        setPage('studio');
+      });
+      grid.appendChild(el);
+    });
+    $('#startFree')?.addEventListener('click', ()=> setPage('studio'));
+  }
+
+  function renderEarn(){
+    const grid = $('#earnGrid');
+    grid.innerHTML = '';
+    EARN.forEach(a => {
+      const b = document.createElement('button');
+      b.className = 'card';
+      b.style.textAlign = 'left';
+      b.disabled = !!state.earnDone[a.id];
+      b.innerHTML = '<div style="font-size:20px">'+(state.earnBusy[a.id] ? '⏳' : (state.earnDone[a.id] ? '✅' : a.icon))+'</div><div style="font-weight:700;margin-top:8px">'+a.label+'</div><div style="font-size:13px;margin-top:8px">'+(state.earnDone[a.id] ? 'Claimed' : '+'+a.credits+' credits')+'</div>';
+      b.addEventListener('click', ()=>{
+        if (state.earnBusy[a.id] || state.earnDone[a.id]) return;
+        state.earnBusy[a.id] = true;
+        renderEarn();
+        setTimeout(()=> {
+          state.earnBusy[a.id] = false;
+          state.earnDone[a.id] = true;
+          state.credits += a.credits;
+          updateCredits();
+          showToast('+'+a.credits+' credits earned!');
+          renderEarn();
+        }, a.duration);
+      });
+      grid.appendChild(b);
+    });
+  }
+
+  // bindings
+  $$('.navbtn').forEach(b => b.addEventListener('click', ()=> setPage(b.dataset.page)));
+  $('#homeBtn').addEventListener('click', ()=> setPage('home'));
+  $('#toStudio').addEventListener('click', ()=> { setPage('studio'); $('#studioPrompt').value = $('#globalPrompt').value || ''; });
+  $('#generateBtn').addEventListener('click', generate);
+  $('#clearBtn').addEventListener('click', ()=> { $('#studioPrompt').value = ''; $('#outputBox').textContent = ''; $('#studioOutput').style.display = 'none'; });
+  $('#copyBtn').addEventListener('click', ()=> {
+    const t = $('#outputBox').textContent || '';
+    if (!t) return showToast('Nothing to copy', 'error');
+    navigator.clipboard?.writeText(t).then(()=> showToast('Copied! 📋')).catch(()=> showToast('Copy failed', 'error'));
+  });
+  $('#upgradeBtn').addEventListener('click', ()=> setPage('pricing'));
+  $('#copyRef').addEventListener('click', ()=> navigator.clipboard?.writeText('aigenix.app/ref/user4829').then(()=>showToast('Link copied! 🔗')));
+
+  $$('.tool-filter').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      const cat = e.currentTarget.dataset.cat;
+      $$('.tool-filter').forEach(x => x.style.background = 'transparent');
+      e.currentTarget.style.background = 'rgba(139,92,246,0.12)';
+      renderTools(cat);
+    });
+  });
+
+  // init
+  function init(){
+    renderTools();
+    renderPicker();
+    renderPricing();
+    renderEarn();
+    selectTool(TOOLS[0]);
+    updateCredits();
+    setPage('home');
+  }
+
+  init();
+
+  // daily reset of earn items at local midnight
+  (function dailyReset(){
+    const now = new Date();
+    const midnight = new Date(now.getFullYear(), now.getMonth(), now.getDate()+1).getTime();
+    setTimeout(()=> { state.earnDone={}; renderEarn(); dailyReset(); }, midnight - now.getTime() + 1000);
+  })();
+
+  // Expose quick helper for local testing (unsafe)
+  window.__AIGENIX = {
+    state,
+    setKey: (k) => { window.GROQ_API_KEY = k; console.warn('Set GROQ_API_KEY on window (client). This is insecure in production.'); }
+  };
+  </script>
+</body>
+</html>
